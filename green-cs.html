@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Footprint — The Environmental Cost of Computing</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1a3a2a;
+    --green-mid: #2d5e3e;
+    --green-light: #4a9e6a;
+    --green-pale: #c8e8d0;
+    --cream: #f5f0e8;
+    --ink: #1a1a14;
+    --muted: #6b7a6a;
+    --danger: #c0392b;
+    --amber: #d4870c;
+    --white: #ffffff;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-mono: 'Space Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--green);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2.5rem;
+    height: 60px;
+    border-bottom: 3px solid var(--green-light);
+  }
+  .nav-logo {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--green-pale);
+    letter-spacing: 0.08em;
+  }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--green-pale);
+    text-decoration: none;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    cursor: pointer;
+  }
+  .nav-links a:hover, .nav-links a.active { opacity: 1; }
+
+  /* PAGE SYSTEM */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* HERO */
+  .hero {
+    background: var(--green);
+    color: var(--cream);
+    padding: 7rem 2.5rem 5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(
+      0deg, transparent, transparent 40px,
+      rgba(255,255,255,0.025) 40px, rgba(255,255,255,0.025) 41px
+    ),
+    repeating-linear-gradient(
+      90deg, transparent, transparent 40px,
+      rgba(255,255,255,0.025) 40px, rgba(255,255,255,0.025) 41px
+    );
+  }
+  .hero-inner { max-width: 860px; margin: 0 auto; position: relative; }
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--green-light);
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    color: var(--cream);
+  }
+  .hero h1 em { font-style: italic; color: var(--green-light); }
+  .hero-sub {
+    font-size: 1.15rem;
+    color: var(--green-pale);
+    max-width: 580px;
+    line-height: 1.75;
+    margin-bottom: 2.5rem;
+  }
+  .hero-stat-row {
+    display: flex; gap: 2.5rem; flex-wrap: wrap;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    padding-top: 2rem;
+    margin-top: 1rem;
+  }
+  .hero-stat { }
+  .hero-stat .num {
+    font-family: var(--font-mono);
+    font-size: 2rem;
+    color: var(--green-light);
+    display: block;
+  }
+  .hero-stat .label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.04em;
+  }
+
+  /* SECTION */
+  section { max-width: 860px; margin: 0 auto; padding: 4rem 2.5rem; }
+  section + section { padding-top: 0; }
+
+  h2 {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    color: var(--green);
+    margin-bottom: 1.25rem;
+    line-height: 1.2;
+  }
+  h3 {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    color: var(--green-mid);
+    margin-bottom: 0.75rem;
+    margin-top: 2rem;
+  }
+  p { margin-bottom: 1rem; color: #3a3a30; }
+
+  /* IMAGE BLOCKS */
+  .img-block {
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 2rem 0;
+    position: relative;
+  }
+  .img-block img {
+    width: 100%; display: block;
+    height: 280px; object-fit: cover;
+  }
+  .img-caption {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    padding: 0.6rem 0;
+    letter-spacing: 0.04em;
+  }
+
+  /* ILLUSTRATED FACT CARDS */
+  .fact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+  .fact-card {
+    background: var(--white);
+    border: 1.5px solid var(--green-pale);
+    border-radius: 4px;
+    padding: 1.5rem;
+    position: relative;
+  }
+  .fact-card .icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+  .fact-card .big-num {
+    font-family: var(--font-mono);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--green);
+    display: block;
+    line-height: 1;
+    margin-bottom: 0.35rem;
+  }
+  .fact-card p { font-size: 0.88rem; color: var(--muted); margin: 0; }
+
+  /* PULL QUOTE */
+  .pull-quote {
+    border-left: 4px solid var(--green-light);
+    background: var(--green-pale);
+    padding: 1.5rem 2rem;
+    margin: 2.5rem 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .pull-quote p {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-style: italic;
+    color: var(--green);
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* ISSUE SECTIONS */
+  .issue {
+    background: var(--white);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 2rem 0;
+    border: 1px solid var(--green-pale);
+  }
+  .issue-header {
+    background: var(--green);
+    color: var(--cream);
+    padding: 1.25rem 1.75rem;
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .issue-header .tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    background: var(--green-light);
+    color: var(--green);
+    padding: 3px 9px;
+    border-radius: 2px;
+  }
+  .issue-header h3 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    color: var(--cream);
+    margin: 0;
+    letter-spacing: 0;
+    font-weight: 700;
+  }
+  .issue-body { padding: 1.5rem 1.75rem; }
+  .issue-body p { font-size: 0.93rem; }
+
+  /* DIVIDER */
+  .divider {
+    max-width: 860px; margin: 0 auto;
+    border: none; border-top: 1px solid var(--green-pale);
+  }
+
+  /* PAGE 2 — SOLUTIONS */
+  .solutions-hero {
+    background: #1a1a14;
+    color: var(--cream);
+    padding: 5rem 2.5rem 4rem;
+  }
+  .solutions-hero .inner { max-width: 860px; margin: 0 auto; }
+  .solutions-hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    line-height: 1.15;
+    margin-bottom: 1rem;
+  }
+  .solutions-hero h1 em { font-style: italic; color: var(--green-light); }
+  .solutions-hero p { color: rgba(255,255,255,0.65); max-width: 600px; }
+
+  .solution-item {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+    padding: 1.75rem 0;
+    border-bottom: 1px solid var(--green-pale);
+  }
+  .solution-item:last-child { border-bottom: none; }
+  .solution-num {
+    font-family: var(--font-mono);
+    font-size: 2.5rem;
+    color: var(--green-light);
+    line-height: 1;
+    padding-top: 4px;
+  }
+  .solution-item h3 {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--green);
+    margin: 0 0 0.5rem;
+    letter-spacing: 0;
+    font-weight: 700;
+  }
+  .solution-item p { font-size: 0.9rem; margin: 0; }
+
+  .progress-wrap { margin: 2.5rem 0; }
+  .progress-item { margin-bottom: 1.25rem; }
+  .progress-label {
+    display: flex; justify-content: space-between;
+    font-size: 13px; margin-bottom: 5px;
+    font-family: var(--font-mono);
+    color: var(--muted);
+  }
+  .progress-track {
+    background: var(--green-pale);
+    border-radius: 2px; height: 8px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green-mid), var(--green-light));
+    border-radius: 2px;
+    transition: width 0.8s ease;
+  }
+
+  /* QUIZ */
+  .quiz-section { padding: 4rem 2.5rem; }
+  .quiz-wrap {
+    max-width: 680px; margin: 0 auto;
+    background: var(--white);
+    border: 1.5px solid var(--green-pale);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .quiz-header {
+    background: var(--green);
+    padding: 2rem;
+    color: var(--cream);
+  }
+  .quiz-header .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--green-light);
+    margin-bottom: 0.5rem;
+  }
+  .quiz-header h2 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    color: var(--cream);
+    margin: 0;
+  }
+  .quiz-progress-bar {
+    height: 4px; background: var(--green-pale);
+  }
+  .quiz-progress-fill {
+    height: 4px; background: var(--green-light);
+    transition: width 0.4s ease;
+  }
+  .quiz-body { padding: 2rem; }
+  .q-counter {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+  .q-text {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--green);
+    margin-bottom: 1.5rem;
+    line-height: 1.45;
+  }
+  .options { display: flex; flex-direction: column; gap: 0.6rem; }
+  .opt {
+    display: flex; align-items: center; gap: 0.75rem;
+    background: var(--cream);
+    border: 1.5px solid var(--green-pale);
+    border-radius: 4px;
+    padding: 0.85rem 1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.93rem;
+    color: var(--ink);
+    user-select: none;
+  }
+  .opt:hover { border-color: var(--green-light); background: var(--green-pale); }
+  .opt.correct { background: #d4edda; border-color: #28a745; color: #155724; }
+  .opt.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+  .opt.disabled { pointer-events: none; }
+  .opt-letter {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--green-pale);
+    color: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+  .feedback {
+    margin-top: 1.2rem;
+    padding: 0.9rem 1rem;
+    border-radius: 4px;
+    font-size: 0.87rem;
+    display: none;
+  }
+  .feedback.correct { background: #d4edda; color: #155724; display: block; }
+  .feedback.wrong { background: #f8d7da; color: #721c24; display: block; }
+  .quiz-nav {
+    margin-top: 1.5rem;
+    display: flex; justify-content: flex-end;
+  }
+  .btn {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    background: var(--green);
+    color: var(--cream);
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn:hover { background: var(--green-mid); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* RESULT */
+  .result-wrap { padding: 2.5rem 2rem; text-align: center; }
+  .result-score {
+    font-family: var(--font-mono);
+    font-size: 4rem;
+    color: var(--green);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+  .result-label {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--green);
+    margin-bottom: 0.75rem;
+  }
+  .result-msg { font-size: 0.93rem; color: var(--muted); margin-bottom: 1.75rem; }
+  .result-breakdown { text-align: left; margin: 1.5rem 0; }
+  .rb-item {
+    display: flex; gap: 0.75rem; align-items: start;
+    font-size: 0.87rem; padding: 0.5rem 0;
+    border-bottom: 1px solid var(--green-pale);
+  }
+  .rb-item:last-child { border: none; }
+  .rb-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .rb-dot.c { background: #28a745; }
+  .rb-dot.w { background: #dc3545; }
+
+  /* SVG ILLUSTRATIONS */
+  .illustration-wrap { margin: 2.5rem 0; }
+
+  /* FOOTER */
+  footer {
+    background: var(--green);
+    color: var(--green-pale);
+    text-align: center;
+    padding: 2rem;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    opacity: 0.9;
+    margin-top: 3rem;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">&#9670; DIGITAL FOOTPRINT</div>
+  <ul class="nav-links">
+    <li><a onclick="showPage('p1')" id="nav-p1" class="active">The Problem</a></li>
+    <li><a onclick="showPage('p2')" id="nav-p2">Solutions</a></li>
+    <li><a onclick="showPage('p3')" id="nav-p3">Quiz</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════════ PAGE 1 ═══════════════════════════════ -->
+<div id="p1" class="page active">
+
+  <div class="hero">
+    <div class="hero-inner">
+      <p class="hero-eyebrow">&#9632; ENVIRONMENTAL IMPACT SERIES</p>
+      <h1>The Hidden Cost of<br><em>Computing</em></h1>
+      <p class="hero-sub">Every search, every stream, every AI query consumes real energy. The digital world has a very physical footprint — and it's growing faster than most people realise.</p>
+      <div class="hero-stat-row">
+        <div class="hero-stat">
+          <span class="num">4%</span>
+          <span class="label">of global CO₂ emissions from ICT</span>
+        </div>
+        <div class="hero-stat">
+          <span class="num">200TWh</span>
+          <span class="label">used by data centres yearly</span>
+        </div>
+        <div class="hero-stat">
+          <span class="num">53M t</span>
+          <span class="label">e-waste generated in 2023</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <h2>Why computing has an environmental problem</h2>
+    <p>We tend to think of software as weightless — a click here, a file there. But every digital action demands physical infrastructure: servers humming in giant warehouses, cables crossing ocean floors, and devices manufactured from rare metals mined at great cost to ecosystems.</p>
+    <p>The ICT sector now produces roughly as much carbon as the global aviation industry. As AI, streaming, cloud computing and the Internet of Things all scale exponentially, these numbers are set to climb sharply through the 2030s.</p>
+
+    <!-- SVG: Energy pie chart illustration -->
+    <div class="illustration-wrap">
+      <svg viewBox="0 0 680 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:4px;background:#1a3a2a;">
+        <text x="34" y="36" font-family="'Space Mono',monospace" font-size="10" fill="#4a9e6a" letter-spacing="2">WHERE DIGITAL ENERGY GOES</text>
+        <!-- donut chart approximation using arcs -->
+        <g transform="translate(130,115)">
+          <!-- data centres 45% -->
+          <path d="M0,0 L0,-75 A75,75 0 0,1 65,-37 Z" fill="#4a9e6a"/>
+          <!-- networks 28% -->
+          <path d="M0,0 L65,-37 A75,75 0 0,1 75,0 Z" fill="#2d5e3e"/>
+          <!-- devices 24% -->
+          <path d="M0,0 L75,0 A75,75 0 0,1 -23,71 Z" fill="#c8e8d0" opacity="0.85"/>
+          <!-- manufacturing 3% -->
+          <path d="M0,0 L-23,71 A75,75 0 0,1 0,-75 Z" fill="#1a1a14"/>
+          <circle r="38" fill="#1a3a2a"/>
+          <text y="5" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" fill="#c8e8d0">ICT Energy</text>
+        </g>
+        <!-- legend -->
+        <g transform="translate(250,60)">
+          <rect width="12" height="12" rx="2" fill="#4a9e6a" y="0"/>
+          <text x="18" y="10" font-family="'DM Sans',sans-serif" font-size="13" fill="#c8e8d0">Data centres — 45%</text>
+          <rect width="12" height="12" rx="2" fill="#2d5e3e" y="28"/>
+          <text x="18" y="38" font-family="'DM Sans',sans-serif" font-size="13" fill="#c8e8d0">Networks — 28%</text>
+          <rect width="12" height="12" rx="2" fill="#c8e8d0" opacity="0.85" y="56"/>
+          <text x="18" y="66" font-family="'DM Sans',sans-serif" font-size="13" fill="#c8e8d0">End-user devices — 24%</text>
+          <rect width="12" height="12" rx="2" fill="#1a1a14" stroke="#4a9e6a" stroke-width="1" y="84"/>
+          <text x="18" y="94" font-family="'DM Sans',sans-serif" font-size="13" fill="#c8e8d0">Manufacturing — 3%</text>
+        </g>
+        <text x="34" y="200" font-family="'Space Mono',monospace" font-size="9" fill="#4a9e6a" opacity="0.6">Source: IEA estimates, approximate proportions</text>
+      </svg>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <section>
+    <h2>The key issues</h2>
+
+    <div class="issue">
+      <div class="issue-header">
+        <span class="tag">ENERGY</span>
+        <h3>Data Centre Power Consumption</h3>
+      </div>
+      <div class="issue-body">
+        <p>Data centres host the servers that run our websites, apps, streaming services and AI models. They require enormous amounts of electricity — both to run the hardware and to cool it. A single large hyperscale facility can consume as much power as a small city. In 2022, global data centres consumed an estimated 200–250 TWh of electricity.</p>
+        <p>The rapid expansion of AI is accelerating this dramatically. Training a single large language model can emit as much CO₂ as five transatlantic flights. Inference (running the model for queries) adds further ongoing energy costs at massive scale.</p>
+      </div>
+    </div>
+
+    <!-- Photo placeholder using SVG scene -->
+    <div class="img-block">
+      <svg viewBox="0 0 860 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block;">
+        <rect width="860" height="280" fill="#0d1f14"/>
+        <!-- server rack silhouettes -->
+        <rect x="40" y="40" width="60" height="200" rx="3" fill="#1a3a2a"/>
+        <rect x="110" y="40" width="60" height="200" rx="3" fill="#1a3a2a"/>
+        <rect x="180" y="40" width="60" height="200" rx="3" fill="#1a3a2a"/>
+        <rect x="250" y="40" width="60" height="200" rx="3" fill="#1a3a2a"/>
+        <!-- LED strips -->
+        <rect x="44" y="60" width="52" height="3" rx="1" fill="#4a9e6a" opacity="0.9"/>
+        <rect x="44" y="80" width="52" height="3" rx="1" fill="#4a9e6a" opacity="0.6"/>
+        <rect x="44" y="100" width="52" height="3" rx="1" fill="#4a9e6a" opacity="0.9"/>
+        <rect x="44" y="120" width="52" height="3" rx="1" fill="orange" opacity="0.8"/>
+        <rect x="44" y="140" width="52" height="3" rx="1" fill="#4a9e6a" opacity="0.7"/>
+        <rect x="114" y="60" width="52" height="3" rx="1" fill="#4a9e6a" opacity="0.5"/>
+        <rect x="114" y="80" width="52" height="3" rx="1" fill="orange" opacity="0.8"/>
+        <rect x="114" y="100" width="52" height="3" rx="1" fill="#4a9e6a" opacity="0.9"/>
+        <rect x="184" y="60" width="52" height="3" rx="1" fill="#4a9e6a" opacity="0.9"/>
+        <rect x="184" y="80" width="52" height="3" rx="1" fill="#4a9e6a" opacity="0.7"/>
+        <rect x="254" y="60" width="52" height="3" rx="1" fill="orange" opacity="0.8"/>
+        <rect x="254" y="80" width="52" height="3" rx="1" fill="#4a9e6a" opacity="0.9"/>
+        <!-- glow effect -->
+        <ellipse cx="170" cy="240" rx="160" ry="20" fill="#4a9e6a" opacity="0.07"/>
+        <!-- label text -->
+        <text x="420" y="100" text-anchor="middle" font-family="'Playfair Display',serif" font-size="32" fill="#c8e8d0" font-style="italic">A single AI training run</text>
+        <text x="420" y="145" text-anchor="middle" font-family="'Playfair Display',serif" font-size="32" fill="#4a9e6a">can emit 500kg of CO₂</text>
+        <text x="420" y="195" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="14" fill="rgba(255,255,255,0.4)">equivalent to roughly 5 transatlantic flights</text>
+      </svg>
+      <p class="img-caption">&#9632; Illustration: energy load in a typical hyperscale data centre</p>
+    </div>
+
+    <div class="issue">
+      <div class="issue-header">
+        <span class="tag">WASTE</span>
+        <h3>Electronic Waste (E-Waste)</h3>
+      </div>
+      <div class="issue-body">
+        <p>The global production of e-waste reached 53.6 million metric tonnes in 2019 and is projected to double by 2050. Computers, phones, and other electronics contain toxic materials including lead, mercury, and cadmium. When disposed of improperly — as the vast majority are — these leach into soil and groundwater.</p>
+        <p>A significant proportion of e-waste is exported to lower-income countries where informal recycling workers, often without protection, are exposed to hazardous chemicals. Only about 17% of e-waste is formally recycled globally.</p>
+      </div>
+    </div>
+
+    <div class="issue">
+      <div class="issue-header">
+        <span class="tag">WATER</span>
+        <h3>Water Consumption for Cooling</h3>
+      </div>
+      <div class="issue-body">
+        <p>Many data centres use water-based cooling systems to manage heat. A large facility can consume millions of litres of water per day. In water-stressed regions, this creates direct competition with local communities and agriculture. Microsoft, Google and Meta have all faced scrutiny over their data centre water usage as they expand AI infrastructure.</p>
+      </div>
+    </div>
+
+    <div class="issue">
+      <div class="issue-header">
+        <span class="tag">MINING</span>
+        <h3>Resource Extraction for Hardware</h3>
+      </div>
+      <div class="issue-body">
+        <p>Modern electronics require rare earth elements such as cobalt, lithium, tantalum, and neodymium. Mining these materials causes habitat destruction, soil degradation, and significant water pollution. Lithium mining in the Atacama Desert, for example, depletes underground water reserves in one of the world's driest regions. The push for ever-faster hardware means these pressures intensify with each product cycle.</p>
+      </div>
+    </div>
+
+    <!-- SVG: growth chart -->
+    <div class="illustration-wrap">
+      <svg viewBox="0 0 680 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:4px;background:#f5f0e8;border:1.5px solid #c8e8d0;">
+        <text x="24" y="30" font-family="'Space Mono',monospace" font-size="9" fill="#2d5e3e" letter-spacing="1.5">E-WASTE GENERATION (MILLION TONNES)</text>
+        <!-- axes -->
+        <line x1="60" y1="160" x2="640" y2="160" stroke="#c8e8d0" stroke-width="1.5"/>
+        <line x1="60" y1="40" x2="60" y2="160" stroke="#c8e8d0" stroke-width="1.5"/>
+        <!-- bars -->
+        <rect x="90" y="130" width="40" height="30" fill="#4a9e6a" opacity="0.6" rx="2"/>
+        <rect x="170" y="110" width="40" height="50" fill="#4a9e6a" opacity="0.7" rx="2"/>
+        <rect x="250" y="90" width="40" height="70" fill="#4a9e6a" opacity="0.8" rx="2"/>
+        <rect x="330" y="70" width="40" height="90" fill="#4a9e6a" opacity="0.9" rx="2"/>
+        <rect x="410" y="50" width="40" height="110" fill="#2d5e3e" rx="2"/>
+        <rect x="490" y="40" width="40" height="120" fill="#1a3a2a" rx="2"/>
+        <!-- projected bar -->
+        <rect x="570" y="35" width="40" height="125" fill="#1a1a14" opacity="0.4" rx="2" stroke-dasharray="4,2" stroke="#1a3a2a" stroke-width="1.5"/>
+        <!-- labels -->
+        <text x="110" y="175" text-anchor="middle" font-family="'Space Mono',monospace" font-size="9" fill="#6b7a6a">2010</text>
+        <text x="190" y="175" text-anchor="middle" font-family="'Space Mono',monospace" font-size="9" fill="#6b7a6a">2013</text>
+        <text x="270" y="175" text-anchor="middle" font-family="'Space Mono',monospace" font-size="9" fill="#6b7a6a">2016</text>
+        <text x="350" y="175" text-anchor="middle" font-family="'Space Mono',monospace" font-size="9" fill="#6b7a6a">2019</text>
+        <text x="430" y="175" text-anchor="middle" font-family="'Space Mono',monospace" font-size="9" fill="#6b7a6a">2022</text>
+        <text x="510" y="175" text-anchor="middle" font-family="'Space Mono',monospace" font-size="9" fill="#6b7a6a">2024</text>
+        <text x="590" y="175" text-anchor="middle" font-family="'Space Mono',monospace" font-size="9" fill="#6b7a6a">2030*</text>
+        <!-- value labels -->
+        <text x="110" y="126" text-anchor="middle" font-family="'Space Mono',monospace" font-size="9" fill="#2d5e3e">33M</text>
+        <text x="190" y="106" text-anchor="middle" font-family="'Space Mono',monospace" font-size="9" fill="#2d5e3e">39M</text>
+        <text x="270" y="86" text-anchor="middle" font-family="'Space Mono',monospace" font-size="9" fill="#2d5e3e">45M</text>
+        <text x="350" y="66" text-anchor="middle" font-family="'Space Mono',monospace" font-size="9" fill="#2d5e3e">54M</text>
+        <text x="430" y="46" text-anchor="middle" font-family="'Space Mono',monospace" font-size="9" fill="#c8e8d0">57M</text>
+        <text x="510" y="36" text-anchor="middle" font-family="'Space Mono',monospace" font-size="9" fill="#c8e8d0">62M</text>
+        <text x="590" y="31" text-anchor="middle" font-family="'Space Mono',monospace" font-size="9" fill="#6b7a6a">74M*</text>
+      </svg>
+    </div>
+
+    <div class="pull-quote">
+      <p>"The internet is not a cloud. It is a physical infrastructure of cables, servers, and cooling systems that draws more electricity than some entire countries."</p>
+    </div>
+
+    <div class="fact-grid">
+      <div class="fact-card">
+        <span class="icon">💧</span>
+        <span class="big-num">3.8L</span>
+        <p>of water used per kilowatt-hour by some air-cooled data centres</p>
+      </div>
+      <div class="fact-card">
+        <span class="icon">🔋</span>
+        <span class="big-num">17%</span>
+        <p>of global e-waste is formally recycled — the rest is dumped or burned</p>
+      </div>
+      <div class="fact-card">
+        <span class="icon">🌡️</span>
+        <span class="big-num">2x</span>
+        <p>ICT's carbon footprint could double by 2030 without intervention</p>
+      </div>
+      <div class="fact-card">
+        <span class="icon">⛏️</span>
+        <span class="big-num">60+</span>
+        <p>elements from the periodic table are used in a modern smartphone</p>
+      </div>
+    </div>
+
+  </section>
+
+  <footer>&#169; 2025 Digital Footprint Project &nbsp;|&nbsp; Environmental Impact of Computing</footer>
+</div>
+
+<!-- ═══════════════════════════════ PAGE 2 ═══════════════════════════════ -->
+<div id="p2" class="page">
+
+  <div class="solutions-hero">
+    <div class="inner">
+      <p style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#4a9e6a;margin-bottom:1rem;">&#9632; PART TWO</p>
+      <h1>Towards <em>Greener</em><br>Computing</h1>
+      <p>The problems are serious — but so is the ingenuity being directed at solving them. From renewable-powered data centres to circular hardware design, change is underway.</p>
+    </div>
+  </div>
+
+  <section>
+    <h2>Industry progress on renewable energy</h2>
+    <p>Several major tech companies have committed to running data centres on 100% renewable energy, either by sourcing clean electricity directly or by purchasing Renewable Energy Certificates (RECs). While commitments vary in ambition and accounting method, the overall trend is significant.</p>
+
+    <div class="progress-wrap">
+      <div class="progress-item">
+        <div class="progress-label"><span>Google — renewable energy matching</span><span>100%</span></div>
+        <div class="progress-track"><div class="progress-bar" style="width:100%"></div></div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-label"><span>Microsoft — renewable electricity commitment</span><span>100%</span></div>
+        <div class="progress-track"><div class="progress-bar" style="width:100%"></div></div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-label"><span>Meta — renewable sourcing (2023)</span><span>100%</span></div>
+        <div class="progress-track"><div class="progress-bar" style="width:100%"></div></div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-label"><span>Amazon — clean energy goal progress</span><span>90%</span></div>
+        <div class="progress-track"><div class="progress-bar" style="width:90%"></div></div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-label"><span>Global cloud sector average</span><span>~45%</span></div>
+        <div class="progress-track"><div class="progress-bar" style="width:45%"></div></div>
+      </div>
+    </div>
+
+    <p style="font-size:0.82rem;color:var(--muted);">Note: Figures reflect published pledges and reporting as of 2024. Accounting methods differ; direct 24/7 renewable matching is considered more rigorous than annual RECs.</p>
+
+    <!-- SVG: Solutions overview diagram -->
+    <div class="illustration-wrap">
+      <svg viewBox="0 0 680 260" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:4px;background:#1a1a14;">
+        <text x="24" y="30" font-family="'Space Mono',monospace" font-size="9" fill="#4a9e6a" letter-spacing="1.5">LEVERS FOR GREENER COMPUTING</text>
+        <!-- central circle -->
+        <circle cx="340" cy="140" r="48" fill="#1a3a2a" stroke="#4a9e6a" stroke-width="1.5"/>
+        <text x="340" y="135" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" fill="#c8e8d0">Green</text>
+        <text x="340" y="152" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" fill="#c8e8d0">Computing</text>
+        <!-- nodes -->
+        <!-- renewable energy -->
+        <rect x="30" y="60" width="130" height="52" rx="3" fill="#2d5e3e" stroke="#4a9e6a" stroke-width="1"/>
+        <text x="95" y="83" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" fill="#c8e8d0">Renewable</text>
+        <text x="95" y="100" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" fill="#c8e8d0">Energy</text>
+        <line x1="160" y1="86" x2="292" y2="130" stroke="#4a9e6a" stroke-width="1" stroke-dasharray="4,3"/>
+        <!-- efficient design -->
+        <rect x="520" y="60" width="130" height="52" rx="3" fill="#2d5e3e" stroke="#4a9e6a" stroke-width="1"/>
+        <text x="585" y="83" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" fill="#c8e8d0">Efficient</text>
+        <text x="585" y="100" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" fill="#c8e8d0">Hardware Design</text>
+        <line x1="520" y1="86" x2="388" y2="130" stroke="#4a9e6a" stroke-width="1" stroke-dasharray="4,3"/>
+        <!-- circular economy -->
+        <rect x="30" y="170" width="130" height="52" rx="3" fill="#2d5e3e" stroke="#4a9e6a" stroke-width="1"/>
+        <text x="95" y="193" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" fill="#c8e8d0">Circular</text>
+        <text x="95" y="210" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" fill="#c8e8d0">Economy</text>
+        <line x1="160" y1="196" x2="292" y2="152" stroke="#4a9e6a" stroke-width="1" stroke-dasharray="4,3"/>
+        <!-- software efficiency -->
+        <rect x="520" y="170" width="130" height="52" rx="3" fill="#2d5e3e" stroke="#4a9e6a" stroke-width="1"/>
+        <text x="585" y="193" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" fill="#c8e8d0">Software</text>
+        <text x="585" y="210" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" fill="#c8e8d0">Efficiency</text>
+        <line x1="520" y1="196" x2="388" y2="152" stroke="#4a9e6a" stroke-width="1" stroke-dasharray="4,3"/>
+        <!-- policy -->
+        <rect x="275" y="210" width="130" height="38" rx="3" fill="#1a3a2a" stroke="#4a9e6a" stroke-width="1" stroke-dasharray="3,2"/>
+        <text x="340" y="233" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" fill="#4a9e6a">Policy &amp; Regulation</text>
+        <line x1="340" y1="210" x2="340" y2="188" stroke="#4a9e6a" stroke-width="1" stroke-dasharray="4,3"/>
+      </svg>
+    </div>
+
+    <h2 style="margin-top:2.5rem;">What needs to happen</h2>
+
+    <div class="solution-item">
+      <div class="solution-num">01</div>
+      <div>
+        <h3>Adopt green-by-default software practices</h3>
+        <p>Software engineers increasingly have a role in sustainability. Writing efficient code, avoiding unnecessary computation, choosing cloud regions powered by renewable energy, and designing for longevity rather than obsolescence all reduce environmental impact. Concepts like "green software engineering" are gaining traction as a discipline.</p>
+      </div>
+    </div>
+
+    <div class="solution-item">
+      <div class="solution-num">02</div>
+      <div>
+        <h3>Right to repair and extended product lifespans</h3>
+        <p>Policies that require devices to be repairable, that mandate spare parts availability, and that ban planned obsolescence can dramatically reduce e-waste. The EU's Ecodesign Regulation is a step in this direction. Consumers buying second-hand and refurbished electronics also help extend hardware lifetimes.</p>
+      </div>
+    </div>
+
+    <div class="solution-item">
+      <div class="solution-num">03</div>
+      <div>
+        <h3>Improve recycling infrastructure and accountability</h3>
+        <p>Formal, certified recycling must become accessible globally — not just in wealthy nations. Producer responsibility legislation, which holds manufacturers accountable for end-of-life product disposal, is proving effective in some regions and should be adopted more widely.</p>
+      </div>
+    </div>
+
+    <div class="solution-item">
+      <div class="solution-num">04</div>
+      <div>
+        <h3>Invest in energy-efficient AI hardware</h3>
+        <p>AI chips and architectures are improving in energy efficiency rapidly. Neuromorphic chips, photonic computing, and in-memory computing are research directions that could dramatically reduce the energy cost per computation. Research investment here is critical given the pace of AI deployment.</p>
+      </div>
+    </div>
+
+    <div class="solution-item">
+      <div class="solution-num">05</div>
+      <div>
+        <h3>Transparency and carbon accounting</h3>
+        <p>Tech companies should be required to disclose full lifecycle carbon footprints — including scope 3 emissions from hardware manufacturing. Voluntary pledges without accountability mechanisms are insufficient. Mandatory reporting frameworks, already under development in the EU and US, are essential.</p>
+      </div>
+    </div>
+
+    <div class="pull-quote">
+      <p>"Sustainable computing isn't a constraint on innovation — it is itself one of the most important engineering challenges of our era."</p>
+    </div>
+
+  </section>
+
+  <footer>&#169; 2025 Digital Footprint Project &nbsp;|&nbsp; Environmental Impact of Computing</footer>
+</div>
+
+<!-- ═══════════════════════════════ QUIZ ═══════════════════════════════ -->
+<div id="p3" class="page">
+  <div class="quiz-section">
+    <div class="quiz-wrap" id="quiz-wrap">
+
+      <div class="quiz-header">
+        <div class="eyebrow">&#9632; KNOWLEDGE CHECK</div>
+        <h2>How green is your digital knowledge?</h2>
+      </div>
+      <div class="quiz-progress-bar">
+        <div class="quiz-progress-fill" id="quiz-pbar" style="width:0%"></div>
+      </div>
+
+      <div class="quiz-body" id="quiz-body">
+        <!-- filled by JS -->
+      </div>
+    </div>
+  </div>
+  <footer>&#169; 2025 Digital Footprint Project &nbsp;|&nbsp; Environmental Impact of Computing</footer>
+</div>
+
+<script>
+// ─── PAGE NAV ───
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ─── QUIZ DATA ───
+const questions = [
+  {
+    q: "Roughly what percentage of global CO₂ emissions does the ICT sector account for?",
+    opts: ["Less than 1%", "Around 4%", "Around 10%", "Around 20%"],
+    ans: 1,
+    exp: "The ICT sector accounts for approximately 4% of global greenhouse gas emissions — comparable to the aviation industry."
+  },
+  {
+    q: "What proportion of global e-waste is formally recycled?",
+    opts: ["About 60%", "About 40%", "About 17%", "About 5%"],
+    ans: 2,
+    exp: "Only around 17% of e-waste worldwide is formally recycled. The rest is often dumped, burned, or informally processed in ways that harm both people and ecosystems."
+  },
+  {
+    q: "Which of the following is a major environmental concern about AI model training?",
+    opts: ["It uses too much internet bandwidth", "It generates large amounts of CO₂ due to high energy use", "It requires specialised paper documentation", "It produces radio-frequency radiation"],
+    ans: 1,
+    exp: "Training a large AI model can emit hundreds of kilograms — sometimes tonnes — of CO₂ due to the massive computing power required."
+  },
+  {
+    q: "Why is lithium mining environmentally controversial?",
+    opts: ["It produces radioactive waste", "It depletes underground water reserves in arid regions", "It releases methane gas directly", "It destroys ocean habitats"],
+    ans: 1,
+    exp: "Lithium mining, particularly in places like the Atacama Desert in South America, consumes vast amounts of underground water in one of the driest regions on Earth."
+  },
+  {
+    q: "What is 'green software engineering' primarily about?",
+    opts: ["Writing code that has a green user interface", "Developing software in environmentally friendly offices", "Reducing the energy consumption and carbon footprint of software systems", "Using open-source tools exclusively"],
+    ans: 2,
+    exp: "Green software engineering focuses on building software that minimises energy consumption, chooses efficient algorithms, and reduces unnecessary computation — thereby lowering carbon emissions."
+  },
+  {
+    q: "Approximately how much e-waste was generated globally in 2019?",
+    opts: ["12 million tonnes", "25 million tonnes", "53 million tonnes", "100 million tonnes"],
+    ans: 2,
+    exp: "Global e-waste reached 53.6 million metric tonnes in 2019 and is expected to nearly double by 2050 if trends continue."
+  },
+  {
+    q: "What does 'Right to Repair' legislation aim to achieve?",
+    opts: ["Allowing consumers to sue manufacturers for defects", "Ensuring products can be repaired by users, reducing e-waste", "Mandating that companies repair products for free", "Limiting how often companies can release new products"],
+    ans: 1,
+    exp: "Right to Repair policies require manufacturers to make devices repairable — by providing spare parts and repair manuals — helping extend product lifespans and reduce e-waste."
+  },
+  {
+    q: "Which resource do many data centres consume in large quantities for cooling purposes?",
+    opts: ["Hydrogen", "Water", "Nitrogen", "Helium"],
+    ans: 1,
+    exp: "Water-based cooling is widely used in data centres. Large facilities can consume millions of litres per day, raising concerns in water-stressed regions."
+  }
+];
+
+let current = 0, score = 0, answered = false;
+const userAnswers = [];
+
+function renderQuestion() {
+  const q = questions[current];
+  const pct = (current / questions.length) * 100;
+  document.getElementById('quiz-pbar').style.width = pct + '%';
+
+  const letters = ['A','B','C','D'];
+  let optsHTML = q.opts.map((o, i) =>
+    `<div class="opt" data-i="${i}" onclick="selectOpt(this, ${i})">
+      <span class="opt-letter">${letters[i]}</span>${o}
+    </div>`
+  ).join('');
+
+  document.getElementById('quiz-body').innerHTML = `
+    <p class="q-counter">Question ${current + 1} of ${questions.length}</p>
+    <p class="q-text">${q.q}</p>
+    <div class="options">${optsHTML}</div>
+    <div class="feedback" id="feedback"></div>
+    <div class="quiz-nav">
+      <button class="btn" id="next-btn" onclick="nextQ()" disabled>
+        ${current < questions.length - 1 ? 'Next question →' : 'See results →'}
+      </button>
+    </div>
+  `;
+  answered = false;
+}
+
+function selectOpt(el, i) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  const opts = document.querySelectorAll('.opt');
+  opts.forEach(o => o.classList.add('disabled'));
+
+  const fb = document.getElementById('feedback');
+  if (i === q.ans) {
+    el.classList.add('correct');
+    score++;
+    userAnswers.push(true);
+    fb.className = 'feedback correct';
+    fb.textContent = '✓ Correct! ' + q.exp;
+  } else {
+    el.classList.add('wrong');
+    opts[q.ans].classList.add('correct');
+    userAnswers.push(false);
+    fb.className = 'feedback wrong';
+    fb.textContent = '✗ Not quite. ' + q.exp;
+  }
+
+  document.getElementById('next-btn').disabled = false;
+}
+
+function nextQ() {
+  current++;
+  if (current >= questions.length) {
+    showResult();
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResult() {
+  document.getElementById('quiz-pbar').style.width = '100%';
+  const pct = Math.round((score / questions.length) * 100);
+  let grade, msg;
+  if (pct >= 88) { grade = "Expert"; msg = "Outstanding! You have a sophisticated understanding of computing's environmental impact."; }
+  else if (pct >= 63) { grade = "Informed"; msg = "Well done — you've clearly engaged with this topic. A few gaps to fill!"; }
+  else if (pct >= 38) { grade = "Learner"; msg = "You're getting there! Explore the Problem and Solutions pages to deepen your knowledge."; }
+  else { grade = "Beginner"; msg = "This is a complex topic — don't worry. Head back to the main pages to learn more!"; }
+
+  let breakdown = userAnswers.map((c, i) =>
+    `<div class="rb-item">
+      <div class="rb-dot ${c ? 'c' : 'w'}"></div>
+      <div><strong>Q${i+1}:</strong> ${questions[i].q.substring(0, 65)}…</div>
+    </div>`
+  ).join('');
+
+  document.getElementById('quiz-body').innerHTML = `
+    <div class="result-wrap">
+      <div class="result-score">${score}/${questions.length}</div>
+      <div class="result-label">${grade}</div>
+      <p class="result-msg">${msg}</p>
+      <div class="result-breakdown">${breakdown}</div>
+      <button class="btn" onclick="restartQuiz()" style="margin-top:1rem;">Try again →</button>
+    </div>
+  `;
+}
+
+function restartQuiz() {
+  current = 0; score = 0; userAnswers.length = 0;
+  document.getElementById('quiz-pbar').style.width = '0%';
+  renderQuestion();
+}
+
+renderQuestion();
+</script>
+</body>
+</html>
